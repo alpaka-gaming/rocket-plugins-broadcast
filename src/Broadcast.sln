@@ -1,0 +1,47 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29920.165
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Broadcast", "Broadcast\Broadcast.csproj", "{DCF5AE83-CF10-43B4-9194-0FA20F34DBC3}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E323F28B-4CD0-462A-B981-BF78EF69A9AA}"
+	ProjectSection(SolutionItems) = preProject
+		..\.gitattributes = ..\.gitattributes
+		..\.gitignore = ..\.gitignore
+		..\build.cake = ..\build.cake
+		..\build.ps1 = ..\build.ps1
+		..\build.sh = ..\build.sh
+		..\CHANGELOG.md = ..\CHANGELOG.md
+		..\LICENSE = ..\LICENSE
+		..\README.md = ..\README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".files", ".files", "{51E84E2A-E001-4A99-9836-9E4D1D2C9CD5}"
+	ProjectSection(SolutionItems) = preProject
+		.files\AssemblyInfo.Common.cs = .files\AssemblyInfo.Common.cs
+		.files\AssemblyInfo.Version.cs = .files\AssemblyInfo.Version.cs
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DCF5AE83-CF10-43B4-9194-0FA20F34DBC3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DCF5AE83-CF10-43B4-9194-0FA20F34DBC3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DCF5AE83-CF10-43B4-9194-0FA20F34DBC3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DCF5AE83-CF10-43B4-9194-0FA20F34DBC3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{51E84E2A-E001-4A99-9836-9E4D1D2C9CD5} = {E323F28B-4CD0-462A-B981-BF78EF69A9AA}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {241AC277-93C3-471E-877A-1730F069E94C}
+		EnterpriseLibraryConfigurationToolBinariesPath = packages\Unity.2.1.505.2\lib\NET35
+	EndGlobalSection
+EndGlobal
