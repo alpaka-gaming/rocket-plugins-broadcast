@@ -34,7 +34,7 @@
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Unturned|AnyCPU'">
-    <OutputPath>%25UNTURNED%25\Servers\Server1\Rocket\Plugins\</OutputPath>
+    <OutputPath>..\..\..\..\..\..\..\Games\Steam\servers\unturned\Servers\Server1\Rocket\Plugins\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <LangVersion>7.3</LangVersion>
