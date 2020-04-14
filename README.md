@@ -1,7 +1,7 @@
 ![logo](src/.editoricon.png)
 # Rocket Broadcast Plugin
 
-[![Build status](https://ci.appveyor.com/api/projects/status/o6u6jq8kxj5gxqrh?svg=true)](https://ci.appveyor.com/project/ennerperez/rocket-plugins-broadcast)
+[![Build status](https://ci.appveyor.com/api/projects/status/l0xolmxfgn3701v5?svg=true)](https://ci.appveyor.com/project/ennerperez/rocket-plugins-broadcast)
 
 ---------------------------------------
 
