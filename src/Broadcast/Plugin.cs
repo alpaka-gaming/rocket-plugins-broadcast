@@ -26,12 +26,12 @@ namespace Rocket.Plugins.Broadcast
             Config = Instance.Configuration.Instance;
         }
 
-        internal static Plugin Instance;
-        internal static Config Config;
+        internal static Plugin Instance { get; private set; }
+        internal static Config Config { get; private set; }
 
-        private List<TextCommand> _commands;
-        private int _lastIndex;
-        private DateTime? _lastMessage;
+        internal static List<TextCommand> Command { get; private set; }
+        internal static int LastIndex { get; private set; }
+        internal static DateTime? LastMessage { get; private set; }
 
         private void FixedUpdate()
         {
@@ -49,18 +49,17 @@ namespace Rocket.Plugins.Broadcast
 
             if (Config.AnnouncementsEnable && Config.Commands != null)
             {
-                _commands = new List<TextCommand>();
+                Command = new List<TextCommand>();
                 foreach (var item in Config.Commands)
                 {
                     var command = new TextCommand(item.Name, item.Help, item.Text);
-                    _commands.Add(command);
+                    Command.Add(command);
                     R.Commands.Register(command);
                 }
             }
 
-            Logger.Log($"[{name}] Successfully Loaded!");
-
             Instance.Configuration.Save();
+            Logger.Log($"[{name}] Successfully Loaded!");
         }
 
         protected override void Unload()
@@ -73,9 +72,9 @@ namespace Rocket.Plugins.Broadcast
                 P.OnPlayerDeath -= Events_OnPlayerDeath;
             if (Config.AnnouncementsEnable)
             {
-                foreach (var command in _commands)
+                foreach (var command in Command)
                     R.Commands.DeregisterFromAssembly(this.Assembly);
-                _commands.Clear();
+                Command.Clear();
             }
 
             Logger.Log($"[{name}] Successfully Unloaded!");
@@ -197,14 +196,14 @@ namespace Rocket.Plugins.Broadcast
         {
             try
             {
-                if (State == PluginState.Loaded && Config.Messages != null && (_lastMessage == null || ((DateTime.Now - _lastMessage.Value).TotalSeconds > Config.AnnouncementsInterval)))
+                if (State == PluginState.Loaded && Config.Messages != null && (LastMessage == null || ((DateTime.Now - LastMessage.Value).TotalSeconds > Config.AnnouncementsInterval)))
                 {
-                    if (_lastIndex > (Config.Messages.Count - 1)) _lastIndex = 0;
-                    var message = Config.Messages[_lastIndex];
+                    if (LastIndex > (Config.Messages.Count - 1)) LastIndex = 0;
+                    var message = Config.Messages[LastIndex];
                     UnturnedChat.Say(message.Text, UnturnedChat.GetColorFromName(message.Color, Color.green));
                     Logger.Log(message.Text);
-                    _lastMessage = DateTime.Now;
-                    _lastIndex++;
+                    LastMessage = DateTime.Now;
+                    LastIndex++;
                 }
             }
             catch (Exception ex)
