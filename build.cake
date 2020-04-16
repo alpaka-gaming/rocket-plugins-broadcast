@@ -11,7 +11,7 @@ var configuration = Argument("configuration", "Release");
 //////////////////////////////////////////////////////////////////////
 
 // Define directories.
-var outputDirectory = "build";
+var outputDirectory = "build/";
 var buildDir = Directory("../../" + outputDirectory);
 
 // Define solutions.
@@ -56,24 +56,12 @@ Task("Build")
 
     foreach (var solution in solutions)
     {
-        if (IsRunningOnWindows())
-        {
-            var settings = new MSBuildSettings()
-                .WithProperty("OutDir", buildDir)
-                .WithProperty("BuildSymbolsPackage", "false");
-            settings.SetConfiguration(configuration);
-            // Use MSBuild
-            MSBuild(solution.Key, settings);
-        }
-        else
-        {
-            var settings = new XBuildSettings()
-                .WithProperty("OutDir", buildDir)
-                .WithProperty("BuildSymbolsPackage", "false");
-            settings.SetConfiguration(configuration);
-            // Use XBuild
-            XBuild(solution.Key, settings);
-        }
+        var settings = new MSBuildSettings()
+            .WithProperty("OutDir", buildDir)
+            .WithProperty("BuildSymbolsPackage", "false");
+        settings.SetConfiguration(configuration);
+        // Use MSBuild
+        MSBuild(solution.Key, settings);
     }
    
 });
