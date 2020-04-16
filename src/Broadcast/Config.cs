@@ -1,7 +1,9 @@
 ﻿using Rocket.API;
 using Rocket.Plugins.Broadcast.Models;
+using Rocket.Unturned.Chat;
 using System.Collections.Generic;
 using System.Xml.Serialization;
+using UnityEngine;
 
 namespace Rocket.Plugins.Broadcast
 {
@@ -29,6 +31,15 @@ namespace Rocket.Plugins.Broadcast
         public bool GroupMessages { get; set; }
         public bool ExtendedMessages { get; set; }
         public bool SuicideMessages { get; set; }
+
+        [XmlIgnore]
+        public Color JoinMessage => UnturnedChat.GetColorFromName(JoinMessageColor, Color.green);
+
+        [XmlIgnore]
+        public Color LeaveMessage => UnturnedChat.GetColorFromName(LeaveMessageColor, Color.green);
+
+        [XmlIgnore]
+        public Color DeathMessage => UnturnedChat.GetColorFromName(DeathMessageColor, Color.red);
 
         public void LoadDefaults()
         {

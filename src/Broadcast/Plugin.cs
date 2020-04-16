@@ -19,12 +19,16 @@ namespace Rocket.Plugins.Broadcast
 {
     public class Plugin : RocketPlugin<Config>
     {
-        internal Plugin _instance;
-        internal Config _config;
+        public Plugin()
+        {
+            name = "Broadcast";
+            Instance = this;
+            Config = Instance.Configuration.Instance;
+        }
 
-        private Color _joinMessageColor;
-        private Color _leaveMessageColor;
-        private Color _deathMessageColor;
+        internal static Plugin Instance;
+        internal static Config Config;
+
         private List<TextCommand> _commands;
         private int _lastIndex;
         private DateTime? _lastMessage;
@@ -36,28 +40,17 @@ namespace Rocket.Plugins.Broadcast
 
         protected override void Load()
         {
-            _instance = this;
-            _config = _instance.Configuration.Instance;
-
-            if (_config.JoinMessageEnable)
-            {
-                _joinMessageColor = UnturnedChat.GetColorFromName(_config.JoinMessageColor, Color.green);
+            if (Config.JoinMessageEnable)
                 U.Events.OnPlayerConnected += Events_OnPlayerConnected;
-            }
-            if (_config.LeaveMessageEnable)
-            {
-                _leaveMessageColor = UnturnedChat.GetColorFromName(_config.LeaveMessageColor, Color.green);
+            if (Config.LeaveMessageEnable)
                 U.Events.OnPlayerDisconnected += Events_OnPlayerDisconnected;
-            }
-            if (_config.DeathMessageEnable)
-            {
-                _deathMessageColor = UnturnedChat.GetColorFromName(_config.DeathMessageColor, Color.red);
+            if (Config.DeathMessageEnable)
                 P.OnPlayerDeath += Events_OnPlayerDeath;
-            }
-            if (_config.AnnouncementsEnable && _config.Commands != null)
+
+            if (Config.AnnouncementsEnable && Config.Commands != null)
             {
                 _commands = new List<TextCommand>();
-                foreach (var item in _config.Commands)
+                foreach (var item in Config.Commands)
                 {
                     var command = new TextCommand(item.Name, item.Help, item.Text);
                     _commands.Add(command);
@@ -65,27 +58,27 @@ namespace Rocket.Plugins.Broadcast
                 }
             }
 
-            Logger.Log("[Broadcast] Successfully Loaded!");
+            Logger.Log($"[{name}] Successfully Loaded!");
 
-            _instance.Configuration.Save();
+            Instance.Configuration.Save();
         }
 
         protected override void Unload()
         {
-            if (_config.JoinMessageEnable)
+            if (Config.JoinMessageEnable)
                 U.Events.OnPlayerConnected -= Events_OnPlayerConnected;
-            if (_config.LeaveMessageEnable)
+            if (Config.LeaveMessageEnable)
                 U.Events.OnPlayerDisconnected -= Events_OnPlayerDisconnected;
-            if (_config.DeathMessageEnable)
+            if (Config.DeathMessageEnable)
                 P.OnPlayerDeath -= Events_OnPlayerDeath;
-            if (_config.AnnouncementsEnable)
+            if (Config.AnnouncementsEnable)
             {
                 foreach (var command in _commands)
                     R.Commands.DeregisterFromAssembly(this.Assembly);
                 _commands.Clear();
             }
 
-            Logger.Log("[Broadcast] Successfully Unloaded!");
+            Logger.Log($"[{name}] Successfully Unloaded!");
         }
 
         public override TranslationList DefaultTranslations
@@ -155,11 +148,11 @@ namespace Rocket.Plugins.Broadcast
                 if (State == PluginState.Loaded)
                     if (!R.Permissions.HasPermission(player, "jlm.vanish"))
                     {
-                        if ((R.Permissions.HasPermission(player, "jlm.group") || player.IsAdmin) && _config.GroupMessages)
+                        if ((R.Permissions.HasPermission(player, "jlm.group") || player.IsAdmin) && Config.GroupMessages)
                         {
                             RocketPermissionsGroup group = R.Permissions.GetGroups(player, false).FirstOrDefault();
-                            if (!_config.ExtendedMessages)
-                                UnturnedChat.Say(Translate(join ? "connect_group_message" : "disconnect_group_message", group != null ? group.DisplayName + ": " : "", player.CharacterName), join == true ? _joinMessageColor : _leaveMessageColor);
+                            if (!Config.ExtendedMessages)
+                                UnturnedChat.Say(Translate(join ? "connect_group_message" : "disconnect_group_message", group != null ? group.DisplayName + ": " : "", player.CharacterName), join == true ? Config.JoinMessage : Config.LeaveMessage);
                             else
                             {
                                 foreach (SteamPlayer SDGPlayer in Provider.clients)
@@ -167,17 +160,17 @@ namespace Rocket.Plugins.Broadcast
                                     if (SDGPlayer != null)
                                     {
                                         if (R.Permissions.HasPermission(new RocketPlayer(SDGPlayer.playerID.steamID.ToString()), "jlm.extended") || SDGPlayer.isAdmin)
-                                            UnturnedChat.Say(SDGPlayer.playerID.steamID, Translate(join ? "connect_group_message_extended" : "disconnect_group_message_extended", group != null ? group.DisplayName + ": " : "", player.CharacterName, player.SteamName, player.CSteamID.ToString()), join == true ? _joinMessageColor : _leaveMessageColor);
+                                            UnturnedChat.Say(SDGPlayer.playerID.steamID, Translate(join ? "connect_group_message_extended" : "disconnect_group_message_extended", group != null ? group.DisplayName + ": " : "", player.CharacterName, player.SteamName, player.CSteamID.ToString()), join == true ? Config.JoinMessage : Config.LeaveMessage);
                                         else
-                                            UnturnedChat.Say(SDGPlayer.playerID.steamID, Translate(join ? "connect_group_message" : "disconnect_group_message", group != null ? group.DisplayName + ": " : "", player.CharacterName), join == true ? _joinMessageColor : _leaveMessageColor);
+                                            UnturnedChat.Say(SDGPlayer.playerID.steamID, Translate(join ? "connect_group_message" : "disconnect_group_message", group != null ? group.DisplayName + ": " : "", player.CharacterName), join == true ? Config.JoinMessage : Config.LeaveMessage);
                                     }
                                 }
                             }
                         }
                         else
                         {
-                            if (!_config.ExtendedMessages)
-                                UnturnedChat.Say(Translate(join ? "connect_message" : "disconnect_message", player.CharacterName), join == true ? _joinMessageColor : _leaveMessageColor);
+                            if (!Config.ExtendedMessages)
+                                UnturnedChat.Say(Translate(join ? "connect_message" : "disconnect_message", player.CharacterName), join == true ? Config.JoinMessage : Config.LeaveMessage);
                             else
                             {
                                 foreach (SteamPlayer SDGPlayer in Provider.clients)
@@ -185,9 +178,9 @@ namespace Rocket.Plugins.Broadcast
                                     if (SDGPlayer != null)
                                     {
                                         if (R.Permissions.HasPermission(new RocketPlayer(SDGPlayer.playerID.steamID.ToString()), "jlm.extended") || SDGPlayer.isAdmin)
-                                            UnturnedChat.Say(SDGPlayer.playerID.steamID, Translate(join ? "connect_message_extended" : "disconnect_message_extended", player.CharacterName, player.SteamName, player.CSteamID.ToString()), join == true ? _joinMessageColor : _leaveMessageColor);
+                                            UnturnedChat.Say(SDGPlayer.playerID.steamID, Translate(join ? "connect_message_extended" : "disconnect_message_extended", player.CharacterName, player.SteamName, player.CSteamID.ToString()), join == true ? Config.JoinMessage : Config.LeaveMessage);
                                         else
-                                            UnturnedChat.Say(SDGPlayer.playerID.steamID, Translate(join ? "connect_message" : "disconnect_message", player.CharacterName), join == true ? _joinMessageColor : _leaveMessageColor);
+                                            UnturnedChat.Say(SDGPlayer.playerID.steamID, Translate(join ? "connect_message" : "disconnect_message", player.CharacterName), join == true ? Config.JoinMessage : Config.LeaveMessage);
                                     }
                                 }
                             }
@@ -204,10 +197,10 @@ namespace Rocket.Plugins.Broadcast
         {
             try
             {
-                if (State == PluginState.Loaded && _config.Messages != null && (_lastMessage == null || ((DateTime.Now - _lastMessage.Value).TotalSeconds > _config.AnnouncementsInterval)))
+                if (State == PluginState.Loaded && Config.Messages != null && (_lastMessage == null || ((DateTime.Now - _lastMessage.Value).TotalSeconds > Config.AnnouncementsInterval)))
                 {
-                    if (_lastIndex > (_config.Messages.Count - 1)) _lastIndex = 0;
-                    var message = _config.Messages[_lastIndex];
+                    if (_lastIndex > (Config.Messages.Count - 1)) _lastIndex = 0;
+                    var message = Config.Messages[_lastIndex];
                     UnturnedChat.Say(message.Text, UnturnedChat.GetColorFromName(message.Color, Color.green));
                     Logger.Log(message.Text);
                     _lastMessage = DateTime.Now;
@@ -246,131 +239,131 @@ namespace Rocket.Plugins.Broadcast
             if (cause.ToString() == "GUN")
             {
                 if (limb == ELimb.SKULL)
-                    UnturnedChat.Say(Translate("gun_headshot_death_message", killer.DisplayName, player.DisplayName, headshot, Rocket.Unturned.Player.UnturnedPlayer.FromCSteamID(murderer).Player.equipment.asset.itemName.ToString()), _deathMessageColor);
+                    UnturnedChat.Say(Translate("gun_headshot_death_message", killer.DisplayName, player.DisplayName, headshot, Rocket.Unturned.Player.UnturnedPlayer.FromCSteamID(murderer).Player.equipment.asset.itemName.ToString()), Config.DeathMessage);
                 else
-                    UnturnedChat.Say(Translate("gun_death_message", killer.DisplayName, player.DisplayName, Rocket.Unturned.Player.UnturnedPlayer.FromCSteamID(murderer).Player.equipment.asset.itemName.ToString()), _deathMessageColor);
+                    UnturnedChat.Say(Translate("gun_death_message", killer.DisplayName, player.DisplayName, Rocket.Unturned.Player.UnturnedPlayer.FromCSteamID(murderer).Player.equipment.asset.itemName.ToString()), Config.DeathMessage);
             }
             else if (cause.ToString() == "MELEE")
             {
                 if (limb == ELimb.SKULL)
-                    UnturnedChat.Say(Translate("melee_headshot_death_message", killer.DisplayName, player.DisplayName, headshot, Rocket.Unturned.Player.UnturnedPlayer.FromCSteamID(murderer).Player.equipment.asset.itemName.ToString()), _deathMessageColor);
+                    UnturnedChat.Say(Translate("melee_headshot_death_message", killer.DisplayName, player.DisplayName, headshot, Rocket.Unturned.Player.UnturnedPlayer.FromCSteamID(murderer).Player.equipment.asset.itemName.ToString()), Config.DeathMessage);
                 else
-                    UnturnedChat.Say(Translate("melee_death_message", killer.DisplayName, player.DisplayName, Rocket.Unturned.Player.UnturnedPlayer.FromCSteamID(murderer).Player.equipment.asset.itemName.ToString()), _deathMessageColor);
+                    UnturnedChat.Say(Translate("melee_death_message", killer.DisplayName, player.DisplayName, Rocket.Unturned.Player.UnturnedPlayer.FromCSteamID(murderer).Player.equipment.asset.itemName.ToString()), Config.DeathMessage);
             }
             else if (cause.ToString() == "PUNCH")
             {
                 if (limb == ELimb.SKULL)
-                    UnturnedChat.Say(Translate("punch_headshot_death_message", killer.DisplayName, player.DisplayName, headshot), _deathMessageColor);
+                    UnturnedChat.Say(Translate("punch_headshot_death_message", killer.DisplayName, player.DisplayName, headshot), Config.DeathMessage);
                 else
-                    UnturnedChat.Say(Translate("punch_death_message", killer.DisplayName, player.DisplayName), _deathMessageColor);
+                    UnturnedChat.Say(Translate("punch_death_message", killer.DisplayName, player.DisplayName), Config.DeathMessage);
             }
             else if (cause.ToString() == "SHRED")
             {
-                UnturnedChat.Say(Translate("shred_death_message", player.DisplayName), _deathMessageColor);
+                UnturnedChat.Say(Translate("shred_death_message", player.DisplayName), Config.DeathMessage);
             }
             else if (cause.ToString() == "ZOMBIE")
             {
-                UnturnedChat.Say(Translate("zombie_death_message", player.DisplayName), _deathMessageColor);
+                UnturnedChat.Say(Translate("zombie_death_message", player.DisplayName), Config.DeathMessage);
             }
             else if (cause.ToString() == "ANIMAL")
             {
-                UnturnedChat.Say(Translate("animal_death_message", player.DisplayName), _deathMessageColor);
+                UnturnedChat.Say(Translate("animal_death_message", player.DisplayName), Config.DeathMessage);
             }
             else if (cause.ToString() == "ROADKILL")
             {
-                UnturnedChat.Say(Translate("roadkill_death_message", killer.DisplayName, player.DisplayName), _deathMessageColor);
+                UnturnedChat.Say(Translate("roadkill_death_message", killer.DisplayName, player.DisplayName), Config.DeathMessage);
             }
             else if (cause.ToString() == "SPARK")
             {
-                UnturnedChat.Say(Translate("spark_death_message", player.DisplayName), _deathMessageColor);
+                UnturnedChat.Say(Translate("spark_death_message", player.DisplayName), Config.DeathMessage);
             }
             else if (cause.ToString() == "VEHICLE")
             {
-                UnturnedChat.Say(Translate("vehicle_death_message", player.DisplayName), _deathMessageColor);
+                UnturnedChat.Say(Translate("vehicle_death_message", player.DisplayName), Config.DeathMessage);
             }
             else if (cause.ToString() == "FOOD")
             {
-                UnturnedChat.Say(Translate("food_death_message", player.DisplayName), _deathMessageColor);
+                UnturnedChat.Say(Translate("food_death_message", player.DisplayName), Config.DeathMessage);
             }
             else if (cause.ToString() == "WATER")
             {
-                UnturnedChat.Say(Translate("water_death_message", player.DisplayName), _deathMessageColor);
+                UnturnedChat.Say(Translate("water_death_message", player.DisplayName), Config.DeathMessage);
             }
             else if (cause.ToString() == "INFECTION")
             {
-                UnturnedChat.Say(Translate("infection_death_message", player.DisplayName), _deathMessageColor);
+                UnturnedChat.Say(Translate("infection_death_message", player.DisplayName), Config.DeathMessage);
             }
             else if (cause.ToString() == "BLEEDING")
             {
-                UnturnedChat.Say(Translate("bleeding_death_message", player.DisplayName), _deathMessageColor);
+                UnturnedChat.Say(Translate("bleeding_death_message", player.DisplayName), Config.DeathMessage);
             }
             else if (cause.ToString() == "LANDMINE")
             {
-                UnturnedChat.Say(Translate("landmine_death_message", player.DisplayName), _deathMessageColor);
+                UnturnedChat.Say(Translate("landmine_death_message", player.DisplayName), Config.DeathMessage);
             }
             else if (cause.ToString() == "BREATH")
             {
-                UnturnedChat.Say(Translate("breath_death_message", player.DisplayName), _deathMessageColor);
+                UnturnedChat.Say(Translate("breath_death_message", player.DisplayName), Config.DeathMessage);
             }
             else if (cause.ToString() == "KILL")
             {
-                UnturnedChat.Say(Translate("kill_death_message", player.DisplayName), _deathMessageColor);
+                UnturnedChat.Say(Translate("kill_death_message", player.DisplayName), Config.DeathMessage);
             }
             else if (cause.ToString() == "FREEZING")
             {
-                UnturnedChat.Say(Translate("freezing_death_message", player.DisplayName), _deathMessageColor);
+                UnturnedChat.Say(Translate("freezing_death_message", player.DisplayName), Config.DeathMessage);
             }
             else if (cause.ToString() == "SENTRY")
             {
-                UnturnedChat.Say(Translate("sentry_death_message", player.DisplayName), _deathMessageColor);
+                UnturnedChat.Say(Translate("sentry_death_message", player.DisplayName), Config.DeathMessage);
             }
             else if (cause.ToString() == "CHARGE")
             {
-                UnturnedChat.Say(Translate("charge_death_message", player.DisplayName), _deathMessageColor);
+                UnturnedChat.Say(Translate("charge_death_message", player.DisplayName), Config.DeathMessage);
             }
             else if (cause.ToString() == "MISSILE")
             {
-                UnturnedChat.Say(Translate("missile_death_message", player.DisplayName), _deathMessageColor);
+                UnturnedChat.Say(Translate("missile_death_message", player.DisplayName), Config.DeathMessage);
             }
             else if (cause.ToString() == "BONES")
             {
-                UnturnedChat.Say(Translate("bones_death_message", player.DisplayName), _deathMessageColor);
+                UnturnedChat.Say(Translate("bones_death_message", player.DisplayName), Config.DeathMessage);
             }
             else if (cause.ToString() == "SPLASH")
             {
-                UnturnedChat.Say(Translate("splash_death_message", player.DisplayName), _deathMessageColor);
+                UnturnedChat.Say(Translate("splash_death_message", player.DisplayName), Config.DeathMessage);
             }
             else if (cause.ToString() == "ACID")
             {
-                UnturnedChat.Say(Translate("acid_death_message", player.DisplayName), _deathMessageColor);
+                UnturnedChat.Say(Translate("acid_death_message", player.DisplayName), Config.DeathMessage);
             }
             else if (cause.ToString() == "SPIT")
             {
-                UnturnedChat.Say(Translate("spit_death_message", player.DisplayName), _deathMessageColor);
+                UnturnedChat.Say(Translate("spit_death_message", player.DisplayName), Config.DeathMessage);
             }
             else if (cause.ToString() == "BURNING")
             {
-                UnturnedChat.Say(Translate("burning_death_message", player.DisplayName), _deathMessageColor);
+                UnturnedChat.Say(Translate("burning_death_message", player.DisplayName), Config.DeathMessage);
             }
             else if (cause.ToString() == "BURNER")
             {
-                UnturnedChat.Say(Translate("burner_death_message", player.DisplayName), _deathMessageColor);
+                UnturnedChat.Say(Translate("burner_death_message", player.DisplayName), Config.DeathMessage);
             }
             else if (cause.ToString() == "BOULDER")
             {
-                UnturnedChat.Say(Translate("boulder_death_message", player.DisplayName), _deathMessageColor);
+                UnturnedChat.Say(Translate("boulder_death_message", player.DisplayName), Config.DeathMessage);
             }
             else if (cause.ToString() == "ARENA")
             {
-                UnturnedChat.Say(Translate("arena_death_message", player.DisplayName), _deathMessageColor);
+                UnturnedChat.Say(Translate("arena_death_message", player.DisplayName), Config.DeathMessage);
             }
             else if (cause.ToString() == "GRENADE")
             {
-                UnturnedChat.Say(Translate("grenade_death_message", player.DisplayName), _deathMessageColor);
+                UnturnedChat.Say(Translate("grenade_death_message", player.DisplayName), Config.DeathMessage);
             }
             else if (cause.ToString() == "SUICIDE" && Configuration.Instance.SuicideMessages)
             {
-                UnturnedChat.Say(Translate("suicide_death_message", player.DisplayName), _deathMessageColor);
+                UnturnedChat.Say(Translate("suicide_death_message", player.DisplayName), Config.DeathMessage);
             }
         }
 
