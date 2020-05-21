@@ -1,6 +1,5 @@
 ﻿using Rocket.API;
 using Rocket.API.Collections;
-using Rocket.API.Serialisation;
 using Rocket.Core;
 using Rocket.Core.Logging;
 using Rocket.Core.Plugins;
@@ -14,6 +13,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Color = UnityEngine.Color;
 using P = Rocket.Unturned.Events.UnturnedPlayerEvents;
+// ReSharper disable CollectionNeverQueried.Global
 
 namespace Rocket.Plugins.Broadcast
 {
@@ -71,9 +71,8 @@ namespace Rocket.Plugins.Broadcast
             if (Config.DeathMessageEnable)
                 P.OnPlayerDeath -= Events_OnPlayerDeath;
             if (Config.AnnouncementsEnable)
-            {
-                foreach (var command in Command)
-                    R.Commands.DeregisterFromAssembly(this.Assembly);
+            { 
+                R.Commands.DeregisterFromAssembly(Assembly);
                 Command.Clear();
             }
 
@@ -149,19 +148,19 @@ namespace Rocket.Plugins.Broadcast
                     {
                         if ((R.Permissions.HasPermission(player, "jlm.group") || player.IsAdmin) && Config.GroupMessages)
                         {
-                            RocketPermissionsGroup group = R.Permissions.GetGroups(player, false).FirstOrDefault();
+                            var group = R.Permissions.GetGroups(player, false).FirstOrDefault();
                             if (!Config.ExtendedMessages)
-                                UnturnedChat.Say(Translate(join ? "connect_group_message" : "disconnect_group_message", group != null ? group.DisplayName + ": " : "", player.CharacterName), join == true ? Config.JoinMessage : Config.LeaveMessage);
+                                UnturnedChat.Say(Translate(join ? "connect_group_message" : "disconnect_group_message", group != null ? group.DisplayName + ": " : "", player.CharacterName), @join ? Config.JoinMessage : Config.LeaveMessage);
                             else
                             {
-                                foreach (SteamPlayer SDGPlayer in Provider.clients)
+                                foreach (var sdgPlayer in Provider.clients)
                                 {
-                                    if (SDGPlayer != null)
+                                    if (sdgPlayer != null)
                                     {
-                                        if (R.Permissions.HasPermission(new RocketPlayer(SDGPlayer.playerID.steamID.ToString()), "jlm.extended") || SDGPlayer.isAdmin)
-                                            UnturnedChat.Say(SDGPlayer.playerID.steamID, Translate(join ? "connect_group_message_extended" : "disconnect_group_message_extended", group != null ? group.DisplayName + ": " : "", player.CharacterName, player.SteamName, player.CSteamID.ToString()), join == true ? Config.JoinMessage : Config.LeaveMessage);
+                                        if (R.Permissions.HasPermission(new RocketPlayer(sdgPlayer.playerID.steamID.ToString()), "jlm.extended") || sdgPlayer.isAdmin)
+                                            UnturnedChat.Say(sdgPlayer.playerID.steamID, Translate(join ? "connect_group_message_extended" : "disconnect_group_message_extended", group != null ? group.DisplayName + ": " : "", player.CharacterName, player.SteamName, player.CSteamID.ToString()), @join ? Config.JoinMessage : Config.LeaveMessage);
                                         else
-                                            UnturnedChat.Say(SDGPlayer.playerID.steamID, Translate(join ? "connect_group_message" : "disconnect_group_message", group != null ? group.DisplayName + ": " : "", player.CharacterName), join == true ? Config.JoinMessage : Config.LeaveMessage);
+                                            UnturnedChat.Say(sdgPlayer.playerID.steamID, Translate(join ? "connect_group_message" : "disconnect_group_message", group != null ? group.DisplayName + ": " : "", player.CharacterName), @join ? Config.JoinMessage : Config.LeaveMessage);
                                     }
                                 }
                             }
@@ -169,17 +168,17 @@ namespace Rocket.Plugins.Broadcast
                         else
                         {
                             if (!Config.ExtendedMessages)
-                                UnturnedChat.Say(Translate(join ? "connect_message" : "disconnect_message", player.CharacterName), join == true ? Config.JoinMessage : Config.LeaveMessage);
+                                UnturnedChat.Say(Translate(join ? "connect_message" : "disconnect_message", player.CharacterName), @join ? Config.JoinMessage : Config.LeaveMessage);
                             else
                             {
-                                foreach (SteamPlayer SDGPlayer in Provider.clients)
+                                foreach (var sdgPlayer in Provider.clients)
                                 {
-                                    if (SDGPlayer != null)
+                                    if (sdgPlayer != null)
                                     {
-                                        if (R.Permissions.HasPermission(new RocketPlayer(SDGPlayer.playerID.steamID.ToString()), "jlm.extended") || SDGPlayer.isAdmin)
-                                            UnturnedChat.Say(SDGPlayer.playerID.steamID, Translate(join ? "connect_message_extended" : "disconnect_message_extended", player.CharacterName, player.SteamName, player.CSteamID.ToString()), join == true ? Config.JoinMessage : Config.LeaveMessage);
+                                        if (R.Permissions.HasPermission(new RocketPlayer(sdgPlayer.playerID.steamID.ToString()), "jlm.extended") || sdgPlayer.isAdmin)
+                                            UnturnedChat.Say(sdgPlayer.playerID.steamID, Translate(join ? "connect_message_extended" : "disconnect_message_extended", player.CharacterName, player.SteamName, player.CSteamID.ToString()), @join ? Config.JoinMessage : Config.LeaveMessage);
                                         else
-                                            UnturnedChat.Say(SDGPlayer.playerID.steamID, Translate(join ? "connect_message" : "disconnect_message", player.CharacterName), join == true ? Config.JoinMessage : Config.LeaveMessage);
+                                            UnturnedChat.Say(sdgPlayer.playerID.steamID, Translate(join ? "connect_message" : "disconnect_message", player.CharacterName), @join ? Config.JoinMessage : Config.LeaveMessage);
                                     }
                                 }
                             }
@@ -233,21 +232,21 @@ namespace Rocket.Plugins.Broadcast
         {
             var killer = UnturnedPlayer.FromCSteamID(murderer);
 
-            string headshot = Translate("headshot_death_message");
+            var headshot = Translate("headshot_death_message");
 
             if (cause.ToString() == "GUN")
             {
                 if (limb == ELimb.SKULL)
-                    UnturnedChat.Say(Translate("gun_headshot_death_message", killer.DisplayName, player.DisplayName, headshot, Rocket.Unturned.Player.UnturnedPlayer.FromCSteamID(murderer).Player.equipment.asset.itemName.ToString()), Config.DeathMessage);
+                    UnturnedChat.Say(Translate("gun_headshot_death_message", killer.DisplayName, player.DisplayName, headshot, UnturnedPlayer.FromCSteamID(murderer).Player.equipment.asset.itemName), Config.DeathMessage);
                 else
-                    UnturnedChat.Say(Translate("gun_death_message", killer.DisplayName, player.DisplayName, Rocket.Unturned.Player.UnturnedPlayer.FromCSteamID(murderer).Player.equipment.asset.itemName.ToString()), Config.DeathMessage);
+                    UnturnedChat.Say(Translate("gun_death_message", killer.DisplayName, player.DisplayName, UnturnedPlayer.FromCSteamID(murderer).Player.equipment.asset.itemName), Config.DeathMessage);
             }
             else if (cause.ToString() == "MELEE")
             {
                 if (limb == ELimb.SKULL)
-                    UnturnedChat.Say(Translate("melee_headshot_death_message", killer.DisplayName, player.DisplayName, headshot, Rocket.Unturned.Player.UnturnedPlayer.FromCSteamID(murderer).Player.equipment.asset.itemName.ToString()), Config.DeathMessage);
+                    UnturnedChat.Say(Translate("melee_headshot_death_message", killer.DisplayName, player.DisplayName, headshot, UnturnedPlayer.FromCSteamID(murderer).Player.equipment.asset.itemName), Config.DeathMessage);
                 else
-                    UnturnedChat.Say(Translate("melee_death_message", killer.DisplayName, player.DisplayName, Rocket.Unturned.Player.UnturnedPlayer.FromCSteamID(murderer).Player.equipment.asset.itemName.ToString()), Config.DeathMessage);
+                    UnturnedChat.Say(Translate("melee_death_message", killer.DisplayName, player.DisplayName, UnturnedPlayer.FromCSteamID(murderer).Player.equipment.asset.itemName), Config.DeathMessage);
             }
             else if (cause.ToString() == "PUNCH")
             {
