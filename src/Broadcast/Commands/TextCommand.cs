@@ -17,7 +17,7 @@ namespace Rocket.Plugins.Broadcast.Commands
             _text = text;
         }
 
-        public List<string> Aliases { get { return new List<string>(); } }
+        public List<string> Aliases => new List<string>();
 
         public void Execute(IRocketPlayer caller, string[] command)
         {
@@ -25,14 +25,14 @@ namespace Rocket.Plugins.Broadcast.Commands
                 UnturnedChat.Say(caller, item);
         }
 
-        public string Help { get { return _help; } }
+        public string Help => _help;
 
-        public string Name { get { return _name; } }
+        public string Name => _name;
 
-        public List<string> Permissions { get { return new List<string>(); } }
+        public List<string> Permissions => new List<string>();
 
-        public string Syntax { get { return ""; } }
+        public string Syntax => "";
 
-        public AllowedCaller AllowedCaller { get { return AllowedCaller.Both; } }
+        public AllowedCaller AllowedCaller => AllowedCaller.Both;
     }
 }
