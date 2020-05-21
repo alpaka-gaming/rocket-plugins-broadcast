@@ -31,20 +31,44 @@ Copy binary to rocket's plugins folder and start server.
 
 ### Configuring
 
- - Configuration 1
+ - Add messages in `<Messages>` node for automatically broadcast messages on server.
+ - Add custom commands in `<Commands>` node for custom text commands execution.
+ - Configure var for all modules, Ej. `AnnouncementsInterval`
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <Config xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Messages>
+    <Message Text="Type [/rules] to read the server rules" Color="green" />
+  </Messages>
+  <Commands>
+    <Command>
+      <Name>rules</Name>
+      <Help>Shows the server rules</Help>
+      <Text>
+        <Line>#1 Kill</Line>
+        <Line>#2 Survive</Line>
+        <Line>#3 Build</Line>
+      </Text>
+    </Command>
+  </Commands>
+  <AnnouncementsEnable>true</AnnouncementsEnable>
+  <AnnouncementsInterval>180</AnnouncementsInterval>
+  <JoinMessageEnable>true</JoinMessageEnable>
+  <LeaveMessageEnable>true</LeaveMessageEnable>
+  <DeathMessageEnable>true</DeathMessageEnable>
+  <JoinMessageColor>green</JoinMessageColor>
+  <LeaveMessageColor>green</LeaveMessageColor>
+  <DeathMessageColor>red</DeathMessageColor>
+  <GroupMessages>false</GroupMessages>
+  <ExtendedMessages>false</ExtendedMessages>
+  <SuicideMessages>true</SuicideMessages>
 </Config>
 ```
 
 ### Permissions
 
-Make sure to add to you Rocket configuration the following permissions
-
-- Permission1
-- Permission2
+No permissions required for now
 
 ### License
 
