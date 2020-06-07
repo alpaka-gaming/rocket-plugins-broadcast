@@ -5,7 +5,7 @@
   <Var name="OutPath" value="$(InPath)/obfuscated" />
   <Var name="KeepPublicApi" value="true" />
   <Var name="HidePrivateApi" value="true" />
-  <Var name="HideStrings" value="true" />
+  <Var name="HideStrings" value="false" />
   <AssemblySearchPath path="../packages/Rocket.Plugins.Dependencies.4.9.5/lib/net40" />
   <Module file="$(InPath)/Rocket.Broadcast.dll" />
 </Obfuscator>
