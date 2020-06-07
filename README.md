@@ -24,6 +24,9 @@ See the [changelog](CHANGELOG.md) for changes.
 - [x] Death Messages
 - [x] Announcements
 - [x] Text Commands
+- [x] GeoIP Join Messages
+  - [x] IPInfo (ipinfo)
+  - [x] IP API (ipapi)
 
 ### Installing
 
@@ -63,6 +66,8 @@ Copy binary to rocket's plugins folder and start server.
   <GroupMessages>false</GroupMessages>
   <ExtendedMessages>false</ExtendedMessages>
   <SuicideMessages>true</SuicideMessages>
+  <ShowJoinCountry>true</ShowJoinCountry>
+  <GeoIpProvider>ipinfo</GeoIpProvider>
 </Config>
 ```
 

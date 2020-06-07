@@ -1,18 +1,24 @@
-﻿using Rocket.API;
+﻿using Newtonsoft.Json;
+using Rocket.API;
 using Rocket.API.Collections;
 using Rocket.Core;
 using Rocket.Core.Logging;
 using Rocket.Core.Plugins;
 using Rocket.Plugins.Broadcast.Commands;
+using Rocket.Plugins.Broadcast.Models;
 using Rocket.Unturned;
 using Rocket.Unturned.Chat;
 using Rocket.Unturned.Player;
 using SDG.Unturned;
+using Steamworks;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net;
 using Color = UnityEngine.Color;
 using P = Rocket.Unturned.Events.UnturnedPlayerEvents;
+
 // ReSharper disable CollectionNeverQueried.Global
 
 namespace Rocket.Plugins.Broadcast
@@ -71,7 +77,7 @@ namespace Rocket.Plugins.Broadcast
             if (Config.DeathMessageEnable)
                 P.OnPlayerDeath -= Events_OnPlayerDeath;
             if (Config.AnnouncementsEnable)
-            { 
+            {
                 R.Commands.DeregisterFromAssembly(Assembly);
                 Command.Clear();
             }
@@ -96,6 +102,11 @@ namespace Rocket.Plugins.Broadcast
                     { "disconnect_message_extended", "{0} [{1}] ({2}) disconnected from the server." },
                     { "connect_group_message_extended", "{0}{1} [{2}] ({3}) connected to the server." },
                     { "disconnect_group_message_extended", "{0}{1} [{2}] ({3}) disconnected from the server." },
+
+                    { "connect_message_country", "{0} connected to the server from {1}."},
+                    { "connect_group_message_country", "{0}{1} connected to the server from {2}." },
+                    { "connect_message_country_extended", "{0} [{1}] ({2}) connected to the server from {3}." },
+                    { "connect_group_message_country_extended", "{0}{1} [{2}] ({3}) connected to the server from {4}." },
 
                     // TL2
                     {"gun_headshot_death_message","{0} [GUN - {3}] {2} {1}"},
@@ -139,51 +150,137 @@ namespace Rocket.Plugins.Broadcast
 
         #region Methods
 
-        private void Message(UnturnedPlayer player, bool join)
+        private void Message(UnturnedPlayer player, bool @join)
         {
             try
             {
-                if (State == PluginState.Loaded)
-                    if (!R.Permissions.HasPermission(player, "jlm.vanish"))
+                if (State != PluginState.Loaded) return;
+
+                IGeoIP geoip = null;
+                if (Config.ShowJoinCountry && @join)
+                {
+                    P2PSessionState_t val = default;
+                    SteamGameServerNetworking.GetP2PSessionState(player.CSteamID, out val);
+                    string iPFromUInt = Parser.getIPFromUInt32(val.m_nRemoteIP);
+
+                    try
                     {
-                        if ((R.Permissions.HasPermission(player, "jlm.group") || player.IsAdmin) && Config.GroupMessages)
+#if DEBUG
+                        iPFromUInt = new System.Net.WebClient().DownloadString("https://ipinfo.io/ip").Replace("\n", "").Trim();
+#endif
+                        var url = string.Empty;
+                        if (Config.GeoIpProvider.Contains("ipinfo"))
+                            url = $"http://ipinfo.io/{iPFromUInt}/json";
+                        else if (Config.GeoIpProvider.Contains("ipapi"))
+                            url = $"http://ip-api.com/json/{iPFromUInt}";
+
+                        var request = (HttpWebRequest)WebRequest.Create(url);
+                        request.Method = "GET";
+                        request.UserAgent = "Unturned/Rocket";
+                        request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
+
+                        var content = string.Empty;
+                        using (var response = (HttpWebResponse)request.GetResponse())
+                        using (var stream = response.GetResponseStream())
+                        using (var sr = new StreamReader(stream))
+                            content = sr.ReadToEnd();
+
+                        if (!string.IsNullOrWhiteSpace(content))
                         {
-                            var group = R.Permissions.GetGroups(player, false).FirstOrDefault();
-                            if (!Config.ExtendedMessages)
-                                UnturnedChat.Say(Translate(join ? "connect_group_message" : "disconnect_group_message", group != null ? group.DisplayName + ": " : "", player.CharacterName), @join ? Config.JoinMessage : Config.LeaveMessage);
-                            else
-                            {
-                                foreach (var sdgPlayer in Provider.clients)
-                                {
-                                    if (sdgPlayer != null)
-                                    {
-                                        if (R.Permissions.HasPermission(new RocketPlayer(sdgPlayer.playerID.steamID.ToString()), "jlm.extended") || sdgPlayer.isAdmin)
-                                            UnturnedChat.Say(sdgPlayer.playerID.steamID, Translate(join ? "connect_group_message_extended" : "disconnect_group_message_extended", group != null ? group.DisplayName + ": " : "", player.CharacterName, player.SteamName, player.CSteamID.ToString()), @join ? Config.JoinMessage : Config.LeaveMessage);
-                                        else
-                                            UnturnedChat.Say(sdgPlayer.playerID.steamID, Translate(join ? "connect_group_message" : "disconnect_group_message", group != null ? group.DisplayName + ": " : "", player.CharacterName), @join ? Config.JoinMessage : Config.LeaveMessage);
-                                    }
-                                }
-                            }
+                            if (Config.GeoIpProvider.Contains("ipinfo"))
+                                geoip = JsonConvert.DeserializeObject<IpInfo>(content);
+                            else if (Config.GeoIpProvider.Contains("ipapi"))
+                                geoip = JsonConvert.DeserializeObject<IpApi>(content);
+                        }
+                    }
+                    catch (Exception)
+                    {
+#if DEBUG
+                        throw;
+#endif
+                    }
+
+                    if (geoip != null && geoip.Country.Length == 2 && Config.Countries.Any(m => m.Key == geoip.Country))
+                        geoip.Country = Config.Countries.First(m => m.Key == geoip.Country).Value;
+
+#if DEBUG
+                    if (geoip != null)
+                        UnturnedChat.Say($"Country: {geoip.Country}");
+#endif
+                }
+
+                var message = string.Empty;
+
+                if (!R.Permissions.HasPermission(player, "broadcast.vanish"))
+                {
+                    if ((R.Permissions.HasPermission(player, "broadcast.group") || player.IsAdmin) && Config.GroupMessages)
+                    {
+                        var group = R.Permissions.GetGroups(player, false).FirstOrDefault();
+                        if (!Config.ExtendedMessages)
+                        {
+                            message = Translate(@join ? "connect_group_message" : "disconnect_group_message", group != null ? group.DisplayName + ": " : "", player.CharacterName);
+                            if (geoip != null && @join)
+                                message = Translate("connect_group_message_country", group != null ? group.DisplayName + ": " : "", player.CharacterName, geoip.Country);
+
+                            UnturnedChat.Say(message, @join ? Config.JoinMessage : Config.LeaveMessage);
                         }
                         else
                         {
-                            if (!Config.ExtendedMessages)
-                                UnturnedChat.Say(Translate(join ? "connect_message" : "disconnect_message", player.CharacterName), @join ? Config.JoinMessage : Config.LeaveMessage);
-                            else
+                            foreach (var sdgPlayer in Provider.clients)
                             {
-                                foreach (var sdgPlayer in Provider.clients)
+                                if (sdgPlayer != null)
                                 {
-                                    if (sdgPlayer != null)
+                                    if (R.Permissions.HasPermission(new RocketPlayer(sdgPlayer.playerID.steamID.ToString()), "broadcast.extended") || sdgPlayer.isAdmin)
                                     {
-                                        if (R.Permissions.HasPermission(new RocketPlayer(sdgPlayer.playerID.steamID.ToString()), "jlm.extended") || sdgPlayer.isAdmin)
-                                            UnturnedChat.Say(sdgPlayer.playerID.steamID, Translate(join ? "connect_message_extended" : "disconnect_message_extended", player.CharacterName, player.SteamName, player.CSteamID.ToString()), @join ? Config.JoinMessage : Config.LeaveMessage);
-                                        else
-                                            UnturnedChat.Say(sdgPlayer.playerID.steamID, Translate(join ? "connect_message" : "disconnect_message", player.CharacterName), @join ? Config.JoinMessage : Config.LeaveMessage);
+                                        message = Translate(@join ? "connect_group_message_extended" : "disconnect_group_message_extended", group != null ? group.DisplayName + ": " : "", player.CharacterName, player.SteamName, player.CSteamID.ToString());
+                                        if (geoip != null && @join)
+                                            message = Translate("connect_group_message_country_extended", group != null ? group.DisplayName + ": " : "", player.CharacterName, player.SteamName, player.CSteamID.ToString(), geoip.Country);
                                     }
+                                    else
+                                    {
+                                        message = Translate(@join ? "connect_group_message" : "disconnect_group_message", group != null ? group.DisplayName + ": " : "", player.CharacterName);
+                                        if (geoip != null && @join)
+                                            message = Translate("connect_group_message_country", group != null ? group.DisplayName + ": " : "", player.CharacterName, geoip.Country);
+                                    }
+
+                                    UnturnedChat.Say(sdgPlayer.playerID.steamID, message, @join ? Config.JoinMessage : Config.LeaveMessage);
                                 }
                             }
                         }
                     }
+                    else
+                    {
+                        if (!Config.ExtendedMessages)
+                        {
+                            message = Translate(@join ? "connect_message" : "disconnect_message", player.CharacterName);
+                            if (geoip != null && @join)
+                                message = Translate("connect_message_country", player.CharacterName, geoip.Country);
+                            UnturnedChat.Say(message, @join ? Config.JoinMessage : Config.LeaveMessage);
+                        }
+                        else
+                        {
+                            foreach (var sdgPlayer in Provider.clients)
+                            {
+                                if (sdgPlayer != null)
+                                {
+                                    if (R.Permissions.HasPermission(new RocketPlayer(sdgPlayer.playerID.steamID.ToString()), "broadcast.extended") || sdgPlayer.isAdmin)
+                                    {
+                                        message = Translate(@join ? "connect_message_extended" : "disconnect_message_extended", player.CharacterName, player.SteamName, player.CSteamID.ToString());
+                                        if (geoip != null && @join)
+                                            message = Translate("connect_message_country_extended", player.CharacterName, player.SteamName, player.CSteamID.ToString(), geoip.Country);
+                                    }
+                                    else
+                                    {
+                                        message = Translate(@join ? "connect_message" : "disconnect_message", player.CharacterName);
+                                        if (geoip != null && @join)
+                                            message = Translate("connect_message_country", player.CharacterName, geoip.Country);
+                                    }
+                                    UnturnedChat.Say(sdgPlayer.playerID.steamID, message, @join ? Config.JoinMessage : Config.LeaveMessage);
+                                }
+                            }
+                        }
+                    }
+                }
             }
             catch (Exception ex)
             {

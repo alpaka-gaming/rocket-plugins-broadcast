@@ -53,6 +53,11 @@
       <HintPath>..\packages\Rocket.Plugins.Dependencies.4.9.5\lib\net40\Assembly-CSharp-firstpass.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.12.0.3\lib\net40\Newtonsoft.Json.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Rocket.API, Version=2.6.4.0, Culture=neutral, PublicKeyToken=null">
       <HintPath>..\packages\Rocket.Plugins.Dependencies.4.9.5\lib\net40\Rocket.API.dll</HintPath>
       <Private>False</Private>
@@ -88,6 +93,7 @@
       <Link>Properties\AssemblyInfo.Version.cs</Link>
     </Compile>
     <Compile Include="Commands\TextCommand.cs" />
+    <Compile Include="Models\GeoIp.cs" />
     <Compile Include="Models\Message.cs" />
     <Compile Include="Models\Command.cs" />
     <Compile Include="Plugin.cs" />
