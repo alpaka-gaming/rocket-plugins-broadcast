@@ -84,6 +84,9 @@ namespace Rocket.Plugins.Broadcast.Models
 
         [JsonProperty("readme")]
         public Uri Readme { get; set; }
+
+        [JsonProperty("bogon")]
+        public bool Bogon { get; set; }
     }
 
     [Serializable]

@@ -159,13 +159,13 @@ namespace Rocket.Plugins.Broadcast
                 IGeoIP geoip = null;
                 if (Config.ShowJoinCountry && @join)
                 {
-                    P2PSessionState_t val = default;
-                    SteamGameServerNetworking.GetP2PSessionState(player.CSteamID, out val);
-                    string iPFromUInt = Parser.getIPFromUInt32(val.m_nRemoteIP);
-
                     try
                     {
+                        SteamGameServerNetworking.GetP2PSessionState(player.CSteamID, out P2PSessionState_t pConnectionState);
+                        string iPFromUInt = Parser.getIPFromUInt32(pConnectionState.m_nRemoteIP);
 #if DEBUG
+                        UnturnedChat.Say($"[DEBUG] CSteamID: {player.CSteamID}");
+                        UnturnedChat.Say($"[DEBUG] iPFromUInt: {iPFromUInt}");
                         iPFromUInt = new System.Net.WebClient().DownloadString("https://ipinfo.io/ip").Replace("\n", "").Trim();
 #endif
                         var url = string.Empty;
@@ -188,24 +188,29 @@ namespace Rocket.Plugins.Broadcast
                         if (!string.IsNullOrWhiteSpace(content))
                         {
                             if (Config.GeoIpProvider.Contains("ipinfo"))
+                            {
                                 geoip = JsonConvert.DeserializeObject<IpInfo>(content);
+                                if ((geoip as IpInfo).Bogon) geoip = null;
+                            }
                             else if (Config.GeoIpProvider.Contains("ipapi"))
+                            {
                                 geoip = JsonConvert.DeserializeObject<IpApi>(content);
+                                if ((geoip as IpApi).Status != "success") geoip = null;
+                            }
                         }
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
-#if DEBUG
-                        throw;
-#endif
+                        Logger.LogException(ex);
                     }
 
-                    if (geoip != null && geoip.Country.Length == 2 && Config.Countries.Any(m => m.Key == geoip.Country))
-                        geoip.Country = Config.Countries.First(m => m.Key == geoip.Country).Value;
+                    if (geoip != null && Config.Countries != null)
+                        if (geoip.Country.Length == 2 && Config.Countries.Any(m => m.Key == geoip.Country))
+                            geoip.Country = Config.Countries.First(m => m.Key == geoip.Country).Value;
 
 #if DEBUG
                     if (geoip != null)
-                        UnturnedChat.Say($"Country: {geoip.Country}");
+                        UnturnedChat.Say($"[DEBUG] Country: {geoip.Country}");
 #endif
                 }
 
