@@ -3,7 +3,8 @@
 # Rocket Broadcast Plugin
 Provides automated In-Game broadcast messages 
 
-![build](https://img.shields.io/github/v/release/lisiados-dev/rocket-plugins-broadcast.svg)
+[![build](https://ci.appveyor.com/api/projects/status/8k0xlseockuwimo0?svg=true)](https://ci.appveyor.com/project/ennerperez/rocket-plugins-broadcast)
+[![release](https://img.shields.io/github/v/release/lisiados-dev/rocket-plugins-broadcast.svg)](https://github.com/lisiados-dev/rocket-plugins-broadcast/releases/latest)
 
 ---------------------------------------
 
